@@ -1,8 +1,10 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, OnDestroy } from '@angular/core';
 import { Element, elements } from 'src/app/_types/element';
 import { MatCheckboxChange } from '@angular/material/checkbox';
+import { Subscription } from 'rxjs';
 
-import { ALL_UNITS } from '../../../../_types/unit';
+import { UnitService } from '../../../../_services/unit.service';
+import { Unit } from '../../../../_types/unit';
 import { InvalidInputError } from '../../../../_types/invalid-input-error';
 
 @Component({
@@ -10,7 +12,7 @@ import { InvalidInputError } from '../../../../_types/invalid-input-error';
     templateUrl: './base-data-input.component.html',
     styleUrls: ['./base-data-input.component.scss'],
 })
-export class BaseDataInputComponent {
+export class BaseDataInputComponent implements OnInit, OnDestroy {
     @Input() waffenschmiede = 0;
     @Input() schmiedekunst = 0;
     @Input() selectedUnit?: string;
@@ -32,8 +34,23 @@ export class BaseDataInputComponent {
     @Output() rangedRequiredChanged = new EventEmitter<boolean>();
     @Output() rangedForbiddenChanged = new EventEmitter<boolean>();
 
-    allUnits = [...ALL_UNITS.keys()];
+    allUnits: string[] = [];
     elements = elements;
+    private unitsSubscription?: Subscription;
+
+    constructor(private unitService: UnitService) {}
+
+    ngOnInit(): void {
+        this.unitsSubscription = this.unitService.getUnits().subscribe(units => {
+            this.allUnits = [...units.keys()];
+        });
+    }
+
+    ngOnDestroy(): void {
+        if (this.unitsSubscription) {
+            this.unitsSubscription.unsubscribe();
+        }
+    }
 
     unitName(index: number, name: string): string {
         return name;

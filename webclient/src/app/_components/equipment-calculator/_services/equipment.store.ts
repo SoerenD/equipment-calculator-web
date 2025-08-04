@@ -19,7 +19,8 @@ import { EquipmentState, errorState, IDLE_STATE, LOADING_STATE } from '../_types
 import { EquipmentService } from '../../../_services/equipment.service';
 import { Action } from '../../../_types/action';
 import { Error } from '../../../_types/error';
-import { unitByName } from '../../../_types/unit';
+import { UnitService } from '../../../_services/unit.service';
+import { Unit } from '../../../_types/unit';
 import { EquipmentSet } from '../../../_types/equipment-set';
 import {
     CalculateEquipment,
@@ -51,7 +52,7 @@ export class EquipmentStore {
     private _state$: BehaviorSubject<EquipmentState>;
     private _actions$: Subject<Action> = new Subject<Action>();
 
-    constructor(private equipmentService: EquipmentService, private storageService: StorageService) {
+    constructor(private equipmentService: EquipmentService, private storageService: StorageService, private unitService: UnitService) {
         this._state$ = new BehaviorSubject<EquipmentState>(new EquipmentState());
         this.state$ = this._state$.asObservable().pipe(observeOn(asyncScheduler));
         this._actions$
@@ -253,17 +254,31 @@ export class EquipmentStore {
     private onUpdateSelectedUnit(action: UpdateSelectedUnit): Observable<Partial<EquipmentState>> {
         return this.state$.pipe(
             take(1),
-            map((state) => {
-                const unit = unitByName(action.selectedUnit);
-                return {
-                    ...state,
-                    selectedUnit: action.selectedUnit,
-                    carryWeight: unit?.carryWeight || 0,
-                    element: unit?.element || Element.NONE,
-                    ranged: unit?.ranged,
-                    rangedRequired: false,
-                    rangedForbidden: false,
-                };
+            mergeMap((state) => {
+                if (!action.selectedUnit) {
+                    return of({
+                        ...state,
+                        selectedUnit: undefined,
+                        carryWeight: 0,
+                        element: Element.NONE,
+                        ranged: false,
+                        rangedRequired: false,
+                        rangedForbidden: false,
+                    });
+                }
+                
+                return this.unitService.getUnitByName(action.selectedUnit).pipe(
+                    take(1),
+                    map((unit: Unit | undefined) => ({
+                        ...state,
+                        selectedUnit: action.selectedUnit,
+                        carryWeight: unit?.carryWeight || 0,
+                        element: unit?.element || Element.NONE,
+                        ranged: unit?.ranged || false,
+                        rangedRequired: false,
+                        rangedForbidden: false,
+                    }))
+                );
             })
         );
     }

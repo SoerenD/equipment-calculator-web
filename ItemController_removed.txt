@@ -1,0 +1,3 @@
+ItemController.kt has been removed as requested.
+The /item/items_json endpoint is no longer available.
+EquipmentService will now use the local items.json file as fallback.
