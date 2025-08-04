@@ -6,19 +6,17 @@ import dl.equipmentCalculator.model.Element.Companion.getWantedDefenseElements
 import dl.equipmentCalculator.model.Element.Companion.getWantedWeaponElements
 import dl.equipmentCalculator.model.Element.Companion.isValidElementCombination
 import dl.equipmentCalculator.model.Equipment
-import dl.equipmentCalculator.model.Equipment.Companion.ALL_ACCESSORIES
-import dl.equipmentCalculator.model.Equipment.Companion.ALL_ARMOUR
-import dl.equipmentCalculator.model.Equipment.Companion.ALL_HELMETS
-import dl.equipmentCalculator.model.Equipment.Companion.ALL_SHIELDS
-import dl.equipmentCalculator.model.Equipment.Companion.ALL_WEAPONS
 import dl.equipmentCalculator.model.Equipment.Companion.MAX_WEIGHT_BONUS
 import dl.equipmentCalculator.model.Equipment.Companion.validWeightAndElements
+import dl.equipmentCalculator.model.EquipmentLists
 import dl.equipmentCalculator.model.EquipmentSet
 import dl.equipmentCalculator.model.EquipmentSet.Companion.getWeightedTotalStats
 import dl.equipmentCalculator.model.exception.ElementMismatchException
 import dl.equipmentCalculator.model.exception.InvalidItemCombinationException
+import dl.equipmentCalculator.service.EquipmentService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.CrossOrigin
@@ -30,6 +28,12 @@ import org.springframework.web.server.ResponseStatusException
 @CrossOrigin
 @RestController
 class EquipmentController {
+
+    @Autowired
+    private lateinit var equipmentLists: EquipmentLists
+    
+    @Autowired
+    private lateinit var equipmentService: EquipmentService
 
     @GetMapping
     @Cacheable("equipmentSet")
@@ -76,6 +80,30 @@ class EquipmentController {
         }
     }
 
+    @GetMapping("/refresh")
+    fun refreshEquipmentData(): String {
+        equipmentService.refreshEquipmentData()
+        return "Equipment data refreshed successfully"
+    }
+
+    @GetMapping("/debug/equipment-stats")
+    fun getEquipmentStats(): Map<String, Any> {
+        return mapOf(
+            "helmets" to equipmentLists.getAllHelmets().size,
+            "armor" to equipmentLists.getAllArmour().size,
+            "shields" to equipmentLists.getAllShields().size,
+            "accessories" to equipmentLists.getAllAccessories().size,
+            "weapons" to equipmentLists.getAllWeapons().size,
+            "total" to (equipmentLists.getAllHelmets().size + 
+                      equipmentLists.getAllArmour().size + 
+                      equipmentLists.getAllShields().size + 
+                      equipmentLists.getAllAccessories().size + 
+                      equipmentLists.getAllWeapons().size),
+            "dataSource" to equipmentService.getDataSource(),
+            "status" to "Equipment loaded successfully"
+        )
+    }
+
     fun getBestItemCombination(
         unitElement: Element,
         unitCarryWeight: Int,
@@ -100,19 +128,19 @@ class EquipmentController {
             maxWeight,
             unitRanged,
             schmiedeLevel,
-            ALL_WEAPONS,
+            equipmentLists.getAllWeapons(),
             wantedWeaponElements,
             rangedRequired,
             rangedForbidden
         )
 
-        val validHelmets = filterInvalidItems(unitElement, maxWeight, unitRanged, schmiedeLevel, ALL_HELMETS)
+        val validHelmets = filterInvalidItems(unitElement, maxWeight, unitRanged, schmiedeLevel, equipmentLists.getAllHelmets())
         val validArmour = filterInvalidItems(
             unitElement,
             maxWeight,
             unitRanged,
             schmiedeLevel,
-            ALL_ARMOUR,
+            equipmentLists.getAllArmour(),
             wantedDefenseElements
         )
         val validShields = filterInvalidItems(
@@ -120,7 +148,7 @@ class EquipmentController {
             maxWeight,
             unitRanged,
             schmiedeLevel,
-            ALL_SHIELDS,
+            equipmentLists.getAllShields(),
             wantedDefenseElements
         )
         val validAccessories = filterInvalidItems(
@@ -128,7 +156,7 @@ class EquipmentController {
             maxWeight,
             unitRanged,
             schmiedeLevel,
-            ALL_ACCESSORIES
+            equipmentLists.getAllAccessories()
         )
 
 
