@@ -7,10 +7,16 @@
     },
     "scripts": {
         "ng": "ng",
-        "start": "ng serve",
-        "build": "ng build",
+        "start": "ng serve --configuration=development",
+        "start:prod": "ng serve --configuration=production",
+        "build": "ng build --configuration=production",
+        "build:dev": "ng build --configuration=development",
+        "build:prod": "ng build --configuration=production",
         "lint": "eslint 'src/**/*.ts'",
-        "lint:fix": "eslint 'src/**/*.ts' --fix"
+        "lint:fix": "eslint 'src/**/*.ts' --fix",
+        "serve:static": "npx http-server ../dist/webclient -p 4200 -c-1 --cors",
+        "build:serve": "npm run build:prod && npm run serve:static",
+        "start:server": "ng serve --host 0.0.0.0 --disable-host-check --configuration=production"
     },
     "private": true,
     "dependencies": {
