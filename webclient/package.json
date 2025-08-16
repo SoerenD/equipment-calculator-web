@@ -16,7 +16,7 @@
         "lint:fix": "eslint 'src/**/*.ts' --fix",
         "serve:static": "npx http-server ../dist/webclient -p 4200 -c-1 --cors",
         "build:serve": "npm run build:prod && npm run serve:static",
-        "start:server": "ng serve --host 0.0.0.0 --disable-host-check --configuration=production"
+        "start:server": "ng serve --host 0.0.0.0 --disable-host-check --allowed-hosts tools.demonlords.de --configuration=production"
     },
     "private": true,
     "dependencies": {
