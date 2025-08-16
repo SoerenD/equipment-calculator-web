@@ -28,7 +28,7 @@ import org.springframework.web.server.ResponseStatusException
 
 @CrossOrigin
 @RestController
-@RequestMapping("/icalc/api")
+@RequestMapping("/api")
 class EquipmentController {
 
     @Autowired
