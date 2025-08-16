@@ -36,13 +36,11 @@ class EquipmentService {
     @PostConstruct
     fun loadEquipmentData() {
         val itemJsonList = try {
-            // Versuch 1: Lade von HTTP-Endpoint
             loadFromHttpEndpoint()
         } catch (e: Exception) {
             LOG.warn("Failed to load equipment data from HTTP endpoint: ${e.message}")
             LOG.info("Falling back to local JSON file...")
             try {
-                // Fallback: Lade von lokaler JSON-Datei
                 loadFromLocalFile()
             } catch (fallbackException: Exception) {
                 LOG.error("Failed to load equipment data from fallback file: ${fallbackException.message}", fallbackException)
@@ -55,7 +53,11 @@ class EquipmentService {
     }
     
     private fun loadFromHttpEndpoint(): List<ItemJson> {
-        val url = "$baseUrl:$serverPort/item/items_json"
+        val url = if (baseUrl.startsWith("https://")) {
+            "$baseUrl/item/items_json"
+        } else {
+            "$baseUrl:$serverPort/item/items_json"
+        }
         LOG.info("Attempting to load equipment data from: $url")
         
         val response = restTemplate.exchange(
@@ -88,9 +90,8 @@ class EquipmentService {
     }
     
     private fun processEquipmentData(itemJsonList: List<ItemJson>) {
-        // Group items by type and convert to Equipment
         val equipmentByType = itemJsonList
-            .filter { it.langItem != null } // Only include items with a display name
+            .filter { it.langItem != null }
             .groupBy { it.typ }
             .mapValues { (_, items) -> 
                 items.map { mapJsonToEquipment(it) }

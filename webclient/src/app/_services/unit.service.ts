@@ -49,10 +49,11 @@ export class UnitService {
      */
     private loadUnits(): void {
         this.isLoading = true;
-        
-        this.apiService.get<UnitJson[]>('/item/units_json')
+
+        this.apiService
+            .get<UnitJson[]>('/item/units_json')
             .pipe(
-                map(unitJsonList => this.mapJsonToUnits(unitJsonList)),
+                map((unitJsonList) => this.mapJsonToUnits(unitJsonList)),
                 catchError(error => {
                     console.warn('Failed to load units from API, trying local fallback file:', error);
                     return this.http.get<UnitJson[]>('assets/units.json').pipe(
@@ -250,28 +251,5 @@ export class UnitService {
             hp,
             mp
         };
-    }
-
-    /**
-     * Refresh units data from API
-     */
-    refreshUnits(): void {
-        this.unitsSubject.next(null);
-        this.loadUnits();
-    }
-
-    /**
-     * Get data source information for debugging
-     */
-    getDataSource(): Observable<string> {
-        return this.apiService.get<UnitJson[]>('/item/units_json').pipe(
-            map(() => 'HTTP API Endpoint'),
-            catchError(() => {
-                return this.http.get<UnitJson[]>('assets/units.json').pipe(
-                    map(() => 'Local File (assets/units.json)'),
-                    catchError(() => of('Hardcoded Fallback Data'))
-                );
-            })
-        );
     }
 }
