@@ -52,13 +52,17 @@ export class EquipmentStore {
     private _state$: BehaviorSubject<EquipmentState>;
     private _actions$: Subject<Action> = new Subject<Action>();
 
-    constructor(private equipmentService: EquipmentService, private storageService: StorageService, private unitService: UnitService) {
+    constructor(
+        private equipmentService: EquipmentService,
+        private storageService: StorageService,
+        private unitService: UnitService,
+    ) {
         this._state$ = new BehaviorSubject<EquipmentState>(new EquipmentState());
         this.state$ = this._state$.asObservable().pipe(observeOn(asyncScheduler));
         this._actions$
             .pipe(
                 observeOn(asyncScheduler),
-                concatMap((action) => this.handleAction(action))
+                concatMap((action) => this.handleAction(action)),
             )
             .subscribe((stateUpdate) => this.updateState(stateUpdate));
 
@@ -158,7 +162,7 @@ export class EquipmentStore {
                               state.hpWeight,
                               state.mpWeight,
                               state.elementAttack,
-                              state.elementDefense
+                              state.elementDefense,
                           )
                           .pipe(
                               take(1),
@@ -175,10 +179,10 @@ export class EquipmentStore {
                                       return of(errorState(new InvalidItemCombinationError()));
                                   }
                                   return of(errorState(error));
-                              })
+                              }),
                           )
                     : this.errorState(new InvalidUnitError('Keine Einheit ausgewählt.'));
-            })
+            }),
         );
     }
 
@@ -192,7 +196,7 @@ export class EquipmentStore {
             })),
             tap(() => {
                 this.storageService.saveWaffenschmiede(waffenschmiede);
-            })
+            }),
         );
     }
 
@@ -206,7 +210,7 @@ export class EquipmentStore {
             })),
             tap(() => {
                 this.storageService.saveSchmiedekunst(schmiedekunst);
-            })
+            }),
         );
     }
 
@@ -221,7 +225,7 @@ export class EquipmentStore {
                 hpWeight,
                 mpWeight,
                 ...IDLE_STATE,
-            }))
+            })),
         );
     }
 
@@ -247,7 +251,7 @@ export class EquipmentStore {
     private errorState(error: Error): Observable<Partial<EquipmentState>> {
         return this.state$.pipe(
             take(1),
-            map((state) => ({ ...state, ...errorState(error) }))
+            map((state) => ({ ...state, ...errorState(error) })),
         );
     }
 
@@ -266,7 +270,7 @@ export class EquipmentStore {
                         rangedForbidden: false,
                     });
                 }
-                
+
                 return this.unitService.getUnitByName(action.selectedUnit).pipe(
                     take(1),
                     map((unit: Unit | undefined) => ({
@@ -277,9 +281,9 @@ export class EquipmentStore {
                         ranged: unit?.ranged || false,
                         rangedRequired: false,
                         rangedForbidden: false,
-                    }))
+                    })),
                 );
-            })
+            }),
         );
     }
 
@@ -289,7 +293,7 @@ export class EquipmentStore {
             map((state) => ({
                 ...state,
                 carryWeight: action.carryWeight,
-            }))
+            })),
         );
     }
 
@@ -299,7 +303,7 @@ export class EquipmentStore {
             map((state) => ({
                 ...state,
                 element: action.element,
-            }))
+            })),
         );
     }
 
@@ -311,7 +315,7 @@ export class EquipmentStore {
                 ranged: action.ranged,
                 rangedRequired: false,
                 rangedForbidden: false,
-            }))
+            })),
         );
     }
 
@@ -321,7 +325,7 @@ export class EquipmentStore {
             map((state) => ({
                 ...state,
                 elementAttack: action.element,
-            }))
+            })),
         );
     }
 
@@ -331,7 +335,7 @@ export class EquipmentStore {
             map((state) => ({
                 ...state,
                 elementDefense: action.element,
-            }))
+            })),
         );
     }
 
@@ -342,7 +346,7 @@ export class EquipmentStore {
                 ...state,
                 rangedRequired: action.rangedRequired,
                 rangedForbidden: false,
-            }))
+            })),
         );
     }
 
@@ -353,7 +357,7 @@ export class EquipmentStore {
                 ...state,
                 rangedForbidden: action.rangedForbidden,
                 rangedRequired: false,
-            }))
+            })),
         );
     }
 
@@ -364,7 +368,7 @@ export class EquipmentStore {
                 ...state,
                 set: undefined,
                 compareSet: action.set,
-            }))
+            })),
         );
     }
 
@@ -374,7 +378,7 @@ export class EquipmentStore {
             map((state) => ({
                 ...state,
                 compareSet: undefined,
-            }))
+            })),
         );
     }
 }

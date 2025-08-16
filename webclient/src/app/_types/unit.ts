@@ -1,7 +1,7 @@
 import { Element } from './element';
 import { UnitType } from './unit-type';
 
-export const CUSTOM_UNIT_NAME = "Custom";
+export const CUSTOM_UNIT_NAME = 'Custom';
 
 export interface Unit {
     name: string;

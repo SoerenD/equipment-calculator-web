@@ -25,7 +25,7 @@ export class ApiService {
                     throw new InvalidItemCombinationError();
                 }
                 throw error;
-            })
+            }),
         );
     }
 }

@@ -15,7 +15,10 @@ import { ApiService } from './api.service';
 export class EquipmentService {
     private equipmentCache: Cache<EquipmentSet>;
 
-    constructor(private apiService: ApiService, cacheService: CacheService) {
+    constructor(
+        private apiService: ApiService,
+        cacheService: CacheService,
+    ) {
         this.equipmentCache = cacheService.get<EquipmentSet>('equipmentCache');
     }
 
@@ -36,7 +39,7 @@ export class EquipmentService {
         hpWeight: number,
         mpWeight: number,
         elementAttack?: Element,
-        elementDefense?: Element
+        elementDefense?: Element,
     ): Observable<EquipmentSet> {
         const cacheKey = EquipmentService.getCacheKey(
             carryWeight,
@@ -50,7 +53,7 @@ export class EquipmentService {
             hpWeight,
             mpWeight,
             elementAttack,
-            elementDefense
+            elementDefense,
         );
 
         return this.apiService

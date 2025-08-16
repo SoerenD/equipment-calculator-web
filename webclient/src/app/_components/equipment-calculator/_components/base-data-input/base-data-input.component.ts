@@ -4,7 +4,6 @@ import { MatCheckboxChange } from '@angular/material/checkbox';
 import { Subscription } from 'rxjs';
 
 import { UnitService } from '../../../../_services/unit.service';
-import { Unit } from '../../../../_types/unit';
 import { InvalidInputError } from '../../../../_types/invalid-input-error';
 
 @Component({
@@ -41,7 +40,7 @@ export class BaseDataInputComponent implements OnInit, OnDestroy {
     constructor(private unitService: UnitService) {}
 
     ngOnInit(): void {
-        this.unitsSubscription = this.unitService.getUnits().subscribe(units => {
+        this.unitsSubscription = this.unitService.getUnits().subscribe((units) => {
             this.allUnits = [...units.keys()];
         });
     }

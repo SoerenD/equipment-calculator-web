@@ -18,17 +18,20 @@ import { StatWeightingFormData } from './_types/stat-weighting-form-data';
 export class EquipmentCalculatorComponent {
     subscriptions = new CompositeSubscription();
 
-    constructor(@Self() public store: EquipmentStore, private snackbar: MatSnackBar) {
+    constructor(
+        @Self() public store: EquipmentStore,
+        private snackbar: MatSnackBar,
+    ) {
         this.subscriptions.add(
             store.state$
                 .pipe(
                     map(({ status }) => status),
                     distinctUntilChanged(),
-                    filter((status) => !!status.error)
+                    filter((status) => !!status.error),
                 )
                 .subscribe((status) => {
                     this.snackbar.open(`Da ist was schief gegangen: ${status.error?.message}`, '', { duration: 5000 });
-                })
+                }),
         );
     }
 

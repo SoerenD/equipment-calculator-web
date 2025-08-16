@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
-import { Observable, BehaviorSubject, catchError, of, map } from 'rxjs';
+import { BehaviorSubject, catchError, map, Observable, of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 
-import { ApiService } from './api.service';
-import { Unit, CUSTOM_UNIT_NAME } from '../_types/unit';
+import { CUSTOM_UNIT_NAME, Unit } from '../_types/unit';
 import { UnitJson } from '../_types/unit-json';
 import { Element } from '../_types/element';
 import { UnitType } from '../_types/unit-type';
+
+import { ApiService } from './api.service';
 
 /**
  * Service for managing unit data with multiple fallback mechanisms:
@@ -21,7 +22,10 @@ export class UnitService {
     private unitsSubject = new BehaviorSubject<Map<string, Unit> | null>(null);
     private isLoading = false;
 
-    constructor(private apiService: ApiService, private http: HttpClient) {}
+    constructor(
+        private apiService: ApiService,
+        private http: HttpClient,
+    ) {}
 
     /**
      * Get all units as an Observable
@@ -30,18 +34,14 @@ export class UnitService {
         if (this.unitsSubject.value === null && !this.isLoading) {
             this.loadUnits();
         }
-        return this.unitsSubject.asObservable().pipe(
-            map(units => units || this.getHardcodedFallbackUnits())
-        );
+        return this.unitsSubject.asObservable().pipe(map((units) => units || this.getHardcodedFallbackUnits()));
     }
 
     /**
      * Get unit by name
      */
     getUnitByName(name: string): Observable<Unit | undefined> {
-        return this.getUnits().pipe(
-            map(units => units.get(name))
-        );
+        return this.getUnits().pipe(map((units) => units.get(name)));
     }
 
     /**
@@ -50,37 +50,36 @@ export class UnitService {
     private loadUnits(): void {
         this.isLoading = true;
 
-        this.apiService
-            .get<UnitJson[]>('/item/units_json')
+        this.http
+            .get<UnitJson[]>('https://tools.demonlords.de/item/units_json')
             .pipe(
                 map((unitJsonList) => this.mapJsonToUnits(unitJsonList)),
-                catchError(error => {
+                catchError((error) => {
                     console.warn('Failed to load units from API, trying local fallback file:', error);
                     return this.http.get<UnitJson[]>('assets/units.json').pipe(
-                        map(unitJsonList => this.mapJsonToUnits(unitJsonList)),
-                        catchError(fallbackError => {
-                            console.error('Failed to load units from fallback file, using hardcoded data:', fallbackError);
+                        map((unitJsonList) => this.mapJsonToUnits(unitJsonList)),
+                        catchError((fallbackError) => {
+                            console.error(
+                                'Failed to load units from fallback file, using hardcoded data:',
+                                fallbackError,
+                            );
                             return of(this.getHardcodedFallbackUnits());
-                        })
+                        }),
                     );
-                })
+                }),
             )
-            .subscribe(units => {
+            .subscribe((units) => {
                 this.unitsSubject.next(units);
                 this.isLoading = false;
             });
     }
 
-    /**
-     * Map JSON units to Unit objects
-     */
     private mapJsonToUnits(unitJsonList: UnitJson[]): Map<string, Unit> {
         const units = new Map<string, Unit>();
 
-        // Always add the custom unit first
         units.set(CUSTOM_UNIT_NAME, this.createCustomUnit());
 
-        unitJsonList.forEach(unitJson => {
+        unitJsonList.forEach((unitJson) => {
             if (unitJson.lang_unit) {
                 const unit = this.mapJsonToUnit(unitJson);
                 units.set(unit.name, unit);
@@ -104,7 +103,7 @@ export class UnitService {
             ap: unitJson.ap,
             vp: unitJson.vp,
             hp: unitJson.hp,
-            mp: unitJson.mp
+            mp: unitJson.mp,
         };
     }
 
@@ -152,7 +151,6 @@ export class UnitService {
             case 2056:
                 return Element.EARTH;
             default:
-                // Handle combinations or unknown values
                 let hasfire = false;
                 let hasIce = false;
                 let hasAir = false;
@@ -187,7 +185,7 @@ export class UnitService {
             ap: 0,
             vp: 0,
             hp: 0,
-            mp: 0
+            mp: 0,
         };
     }
 
@@ -197,28 +195,39 @@ export class UnitService {
     private getHardcodedFallbackUnits(): Map<string, Unit> {
         const units: Array<Unit> = [
             this.createCustomUnit(),
-            this.createUnit("Späher", UnitType.HUMAN, 20, true, Element.NONE, 10, 30, 55, 32, 0),
-            this.createUnit("Kreuzritter", UnitType.HUMAN, 160, false, Element.NONE, 25, 120, 75, 215, 0),
-            this.createUnit("Drachenjäger", UnitType.HUMAN, 270, true, Element.NONE, 40, 300, 120, 300, 0),
-            this.createUnit("Pikenier", UnitType.HUMAN, 350, false, Element.NONE, 60, 1050, 350, 540, 0),
-            this.createUnit("Erzengel", UnitType.HUMAN, 430, false, Element.AIR, 80, 780, 640, 930, 200),
-            this.createUnit("Titan", UnitType.HUMAN, 580, false, Element.EARTH, 120, 900, 3600, 4700, 0),
-            this.createUnit("Lich", UnitType.UNDEAD, 170, false, Element.NONE, 60, 155, 120, 195, 30),
-            this.createUnit("Knochendrache", UnitType.UNDEAD, 200, true, Element.NONE, 200, 0, 0, 0, 0),
-            this.createUnit("Teufel", UnitType.UNDEAD, 360, false, Element.NONE, 90, 1000, 1400, 1500, 0),
-            this.createUnit("Ifrit", UnitType.UNDEAD, 650, false, Element.NONE, 210, 1930, 4000, 2550, 0),
-            this.createUnit("Daktyle", UnitType.DEMON, 250, false, Element.NONE, 80, 1000, 775, 1050, 300),
-            this.createUnit("Jötun", UnitType.DEMON, 200, true, Element.NONE, 140, 1420, 800, 1425, 0),
-            this.createUnit("Thurse", UnitType.DEMON, 650, false, Element.EARTH, 240, 5515, 5185, 4985, 0),
-            this.createUnit("Tyr", UnitType.DEMON, 1230, false, Element.NONE, 300, 6200, 5200, 7200, 0),
-            this.createUnit("Eiselementar", UnitType.ELEMENTAL, 200, false, Element.ICE, 50, 670, 570, 840, 150),
-            this.createUnit("Luftelementar", UnitType.ELEMENTAL, 200, true, Element.AIR, 50, 2700, 2500, 2390, 0),
-            this.createUnit("Feuerelementar", UnitType.ELEMENTAL, 200, true, Element.FIRE, 50, 2700, 2500, 2390, 0),
-            this.createUnit("Erdelementar", UnitType.ELEMENTAL, 200, true, Element.EARTH, 50, 2700, 2500, 2390, 0),
-            this.createUnit("Banshee", UnitType.GHOST, 150, false, Element.AIR, 100, 245, 1950, 3000, 625),
-            this.createUnit("Hüter des Silberhains", UnitType.HUMAN, 350, false, Element.NONE, 125, 2480, 1700, 4000, 0),
-            this.createUnit("Harlekin", UnitType.DEMON, 200, true, Element.NONE, 50, 2350, 1950, 2150, 0),
-            this.createUnit("Varsillischer Riese", UnitType.HUMAN, 650, false, Element.EARTH, 75, 2150, 2200, 4800, 0)
+            this.createUnit('Späher', UnitType.HUMAN, 20, true, Element.NONE, 10, 30, 55, 32, 0),
+            this.createUnit('Kreuzritter', UnitType.HUMAN, 160, false, Element.NONE, 25, 120, 75, 215, 0),
+            this.createUnit('Drachenjäger', UnitType.HUMAN, 270, true, Element.NONE, 40, 300, 120, 300, 0),
+            this.createUnit('Pikenier', UnitType.HUMAN, 350, false, Element.NONE, 60, 1050, 350, 540, 0),
+            this.createUnit('Erzengel', UnitType.HUMAN, 430, false, Element.AIR, 80, 780, 640, 930, 200),
+            this.createUnit('Titan', UnitType.HUMAN, 580, false, Element.EARTH, 120, 900, 3600, 4700, 0),
+            this.createUnit('Lich', UnitType.UNDEAD, 170, false, Element.NONE, 60, 155, 120, 195, 30),
+            this.createUnit('Knochendrache', UnitType.UNDEAD, 200, true, Element.NONE, 200, 0, 0, 0, 0),
+            this.createUnit('Teufel', UnitType.UNDEAD, 360, false, Element.NONE, 90, 1000, 1400, 1500, 0),
+            this.createUnit('Ifrit', UnitType.UNDEAD, 650, false, Element.NONE, 210, 1930, 4000, 2550, 0),
+            this.createUnit('Daktyle', UnitType.DEMON, 250, false, Element.NONE, 80, 1000, 775, 1050, 300),
+            this.createUnit('Jötun', UnitType.DEMON, 200, true, Element.NONE, 140, 1420, 800, 1425, 0),
+            this.createUnit('Thurse', UnitType.DEMON, 650, false, Element.EARTH, 240, 5515, 5185, 4985, 0),
+            this.createUnit('Tyr', UnitType.DEMON, 1230, false, Element.NONE, 300, 6200, 5200, 7200, 0),
+            this.createUnit('Eiselementar', UnitType.ELEMENTAL, 200, false, Element.ICE, 50, 670, 570, 840, 150),
+            this.createUnit('Luftelementar', UnitType.ELEMENTAL, 200, true, Element.AIR, 50, 2700, 2500, 2390, 0),
+            this.createUnit('Feuerelementar', UnitType.ELEMENTAL, 200, true, Element.FIRE, 50, 2700, 2500, 2390, 0),
+            this.createUnit('Erdelementar', UnitType.ELEMENTAL, 200, true, Element.EARTH, 50, 2700, 2500, 2390, 0),
+            this.createUnit('Banshee', UnitType.GHOST, 150, false, Element.AIR, 100, 245, 1950, 3000, 625),
+            this.createUnit(
+                'Hüter des Silberhains',
+                UnitType.HUMAN,
+                350,
+                false,
+                Element.NONE,
+                125,
+                2480,
+                1700,
+                4000,
+                0,
+            ),
+            this.createUnit('Harlekin', UnitType.DEMON, 200, true, Element.NONE, 50, 2350, 1950, 2150, 0),
+            this.createUnit('Varsillischer Riese', UnitType.HUMAN, 650, false, Element.EARTH, 75, 2150, 2200, 4800, 0),
         ];
 
         return new Map(units.map((unit) => [unit.name, unit]));
@@ -237,7 +246,7 @@ export class UnitService {
         ap: number,
         vp: number,
         hp: number,
-        mp: number
+        mp: number,
     ): Unit {
         return {
             name,
@@ -249,7 +258,7 @@ export class UnitService {
             ap,
             vp,
             hp,
-            mp
+            mp,
         };
     }
 }

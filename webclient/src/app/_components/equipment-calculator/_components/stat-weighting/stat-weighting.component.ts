@@ -34,9 +34,9 @@ export class StatWeightingComponent implements OnInit, OnDestroy {
                             hpWeight: changes.hpWeight || 0,
                             mpWeight: changes.mpWeight || 0,
                         });
-                    })
+                    }),
                 )
-                .subscribe()
+                .subscribe(),
         );
     }
 

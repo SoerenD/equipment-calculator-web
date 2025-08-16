@@ -58,6 +58,7 @@ class EquipmentService {
         } else {
             "$baseUrl:$serverPort/item/items_json"
         }
+
         LOG.info("Attempting to load equipment data from: $url")
         
         val response = restTemplate.exchange(

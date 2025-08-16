@@ -225,7 +225,7 @@ function equipment(
     ranged: boolean,
     element: Element,
     requiredWaffenschmiede: number,
-    name: string
+    name: string,
 ) {
     return {
         name,
