@@ -53,11 +53,7 @@ class EquipmentService {
     }
     
     private fun loadFromHttpEndpoint(): List<ItemJson> {
-        val url = if (baseUrl.startsWith("https://")) {
-            "$baseUrl/item/items_json"
-        } else {
-            "$baseUrl:$serverPort/item/items_json"
-        }
+        val url = "https://tools.demonlords.de/item/items_json";
 
         LOG.info("Attempting to load equipment data from: $url")
         
