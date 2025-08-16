@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.core.io.ClassPathResource
 import org.springframework.http.HttpMethod
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
+import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import java.util.concurrent.ConcurrentHashMap
@@ -25,7 +27,16 @@ class EquipmentService {
     @Value("\${equipment.json.url:http://localhost}")
     private var baseUrl: String = "http://localhost"
     
-    private val restTemplate = RestTemplate()
+    private val restTemplate = RestTemplate().apply {
+        val jsonConverter = MappingJackson2HttpMessageConverter()
+        jsonConverter.supportedMediaTypes = listOf(
+            MediaType.APPLICATION_JSON,
+            MediaType.TEXT_HTML,
+            MediaType("text", "html", Charsets.UTF_8)
+        )
+        messageConverters.clear()
+        messageConverters.add(jsonConverter)
+    }
     private val objectMapper = jacksonObjectMapper()
     private val equipmentCache = ConcurrentHashMap<String, List<Equipment>>()
     
@@ -88,7 +99,7 @@ class EquipmentService {
     
     private fun processEquipmentData(itemJsonList: List<ItemJson>) {
         val equipmentByType = itemJsonList
-            .filter { it.langItem != null }
+            .filter { it.langItem != null || it.name.isNotBlank() } // Include items with either lang_item or name
             .groupBy { it.typ }
             .mapValues { (_, items) -> 
                 items.map { mapJsonToEquipment(it) }
@@ -128,7 +139,7 @@ class EquipmentService {
             ranged = itemJson.distanz > 0,
             element = mapIntToElement(itemJson.element),
             requiredWaffenschmiede = itemJson.blacksmithLevel,
-            name = itemJson.langItem ?: "Unknown Item"
+            name = itemJson.langItem ?: itemJson.name.takeIf { it.isNotBlank() } ?: "Unknown Item"
         )
     }
     

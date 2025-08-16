@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 
-@CrossOrigin
+@CrossOrigin(origins = ["http://localhost:4200", "https://tools.demonlords.de"])
 @RestController
 @RequestMapping("/api")
 class EquipmentController {
