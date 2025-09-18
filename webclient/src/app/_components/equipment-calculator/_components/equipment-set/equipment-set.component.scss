@@ -10,7 +10,8 @@
     line-height: 40px;
     overflow: hidden;
     text-overflow: ellipsis;
-    display: inline-block;
+    display: flex;
+    align-items: center;
     white-space: nowrap;
 }
 
@@ -37,6 +38,10 @@
 }
 
 .set-value {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    
     .value {
         display: inline-block;
         min-width: 80px;
@@ -63,6 +68,28 @@
 
     .icons img {
         vertical-align: sub;
+    }
+}
+
+.ignore-button {
+    all: unset; /* Resets all inherited styles */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    margin-left: 8px;
+    cursor: pointer;
+    
+    mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        color: #f44336;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 }
 

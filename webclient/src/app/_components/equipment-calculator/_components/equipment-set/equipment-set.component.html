@@ -1,24 +1,17 @@
 <ng-container *ngIf="set">
     <div class="set-items">
-        <div class="set-row">
-            <span class="set-label">Waffe:</span>
-            <span class="set-value">{{ set.weapon.name }} ({{ set.weapon.requiredWaffenschmiede }})</span>
-        </div>
-        <div class="set-row">
-            <span class="set-label">Schild:</span>
-            <span class="set-value">{{ set.shield.name }} ({{ set.shield.requiredWaffenschmiede }})</span>
-        </div>
-        <div class="set-row">
-            <span class="set-label">Rüstung:</span>
-            <span class="set-value">{{ set.armour.name }} ({{ set.armour.requiredWaffenschmiede }})</span>
-        </div>
-        <div class="set-row">
-            <span class="set-label">Helm:</span>
-            <span class="set-value">{{ set.helmet.name }} ({{ set.helmet.requiredWaffenschmiede }})</span>
-        </div>
-        <div class="set-row">
-            <span class="set-label">Schmuck:</span>
-            <span class="set-value">{{ set.accessory.name }} ({{ set.accessory.requiredWaffenschmiede }})</span>
+        <div class="set-row" *ngFor="let item of getEquipmentItems()">
+            <span class="set-label">{{ item.label }}</span>
+            <span class="set-value">
+                {{ item.equipment.name }} ({{ item.equipment.requiredWaffenschmiede }})
+                <button 
+                    *ngIf="item.equipment.name !== DEFAULT_EQUIPMENT_NAME"
+                    (click)="ignoreItem(item.equipment.name)"
+                    title="Ignore this item"
+                    class="ignore-button">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </span>
         </div>
     </div>
     <div class="set-stats">

@@ -1,7 +1,9 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 import { EquipmentSet, totalAP, totalHP, totalMP, totalVP, totalWeight } from '../../../../_types/equipment-set';
 import { Element } from '../../../../_types/element';
+import { Equipment } from '../../../../_types/equipment';
+import { DEFAULT_EQUIPMENT_NAME, EQUIPMENT_LABELS } from '../../../../_constants/equipment.constants';
 
 @Component({
     selector: 'app-equipment-set',
@@ -13,6 +15,10 @@ export class EquipmentSetComponent {
     @Input() set?: EquipmentSet;
     @Input() compareWith?: EquipmentSet;
     @Input() schmiedekunst = 0;
+    
+    @Output() itemIgnored = new EventEmitter<string>();
+
+    readonly DEFAULT_EQUIPMENT_NAME = DEFAULT_EQUIPMENT_NAME;
 
     totalAP = totalAP;
     totalVP = totalVP;
@@ -74,5 +80,21 @@ export class EquipmentSetComponent {
 
     differenceMP(set: EquipmentSet, compareWith: EquipmentSet): number {
         return totalMP(set, this.schmiedekunst) - totalMP(compareWith, this.schmiedekunst);
+    }
+
+    ignoreItem(itemName: string): void {
+        this.itemIgnored.emit(itemName);
+    }
+
+    getEquipmentItems(): Array<{label: string, equipment: Equipment}> {
+        if (!this.set) return [];
+        
+        return [
+            { label: EQUIPMENT_LABELS.WEAPON, equipment: this.set.weapon },
+            { label: EQUIPMENT_LABELS.SHIELD, equipment: this.set.shield },
+            { label: EQUIPMENT_LABELS.ARMOUR, equipment: this.set.armour },
+            { label: EQUIPMENT_LABELS.HELMET, equipment: this.set.helmet },
+            { label: EQUIPMENT_LABELS.ACCESSORY, equipment: this.set.accessory }
+        ];
     }
 }

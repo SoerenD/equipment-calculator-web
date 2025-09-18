@@ -90,4 +90,16 @@ export class EquipmentCalculatorComponent {
     removeCompareSet(): void {
         this.store.removeCompareSet();
     }
+
+    addIgnoredItem(itemName: string): void {
+        this.store.addIgnoredItem(itemName);
+    }
+
+    removeIgnoredItem(itemName: string): void {
+        this.store.removeIgnoredItem(itemName);
+    }
+
+    clearIgnoredItems(): void {
+        this.store.clearIgnoredItems();
+    }
 }

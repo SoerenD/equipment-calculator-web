@@ -16,6 +16,7 @@ import { MatSliderModule } from '@angular/material/slider';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatChipsModule } from '@angular/material/chips';
 
 import { AppComponent } from './app.component';
 import { AboutDialogComponent } from './_components/about-dialog/about-dialog.component';
@@ -57,6 +58,7 @@ import { ContextComponent } from './_components/context/context.component';
         AppRoutingModule,
         MatProgressSpinnerModule,
         MatSnackBarModule,
+        MatChipsModule,
     ],
     providers: [],
     bootstrap: [AppComponent],

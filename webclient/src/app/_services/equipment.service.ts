@@ -40,6 +40,7 @@ export class EquipmentService {
         mpWeight: number,
         elementAttack?: Element,
         elementDefense?: Element,
+        ignoredItems?: string[],
     ): Observable<EquipmentSet> {
         const cacheKey = EquipmentService.getCacheKey(
             carryWeight,
@@ -54,6 +55,7 @@ export class EquipmentService {
             mpWeight,
             elementAttack,
             elementDefense,
+            ignoredItems?.sort()?.join('|') || '',
         );
 
         return this.apiService
@@ -70,6 +72,7 @@ export class EquipmentService {
                 vpWeight,
                 hpWeight,
                 mpWeight,
+                ignoredItems: ignoredItems?.join(',') || '',
             })
             .pipe(cached(this.equipmentCache, cacheKey));
     }

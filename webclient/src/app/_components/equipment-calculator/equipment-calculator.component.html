@@ -40,6 +40,30 @@
         mat-raised-button>Ausrüstung berechnen
     </button>
 
+    <!-- Ignored Items Display -->
+    <mat-card *ngIf="state.ignoredItems.length > 0">
+        <mat-card-header>
+            <mat-card-title>Ignorierte Gegenstände</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+            <div class="ignored-items-container">
+                <mat-chip-set>
+                    <mat-chip 
+                        *ngFor="let item of state.ignoredItems">
+                        {{ item }}
+                        <button matChipRemove (click)="removeIgnoredItem(item)">
+                            <mat-icon>cancel</mat-icon>
+                        </button>
+                    </mat-chip>
+                </mat-chip-set>
+                
+                <button mat-stroked-button (click)="clearIgnoredItems()" color="warn" class="clear-button">
+                    Alle entfernen
+                </button>
+            </div>
+        </mat-card-content>
+    </mat-card>
+
     <mat-card *ngIf="state.set as set">
         <mat-card-title>
             <button (click)="markForComparison(set)" mat-icon-button>
@@ -52,6 +76,7 @@
                 [schmiedekunst]="state.schmiedekunst"
                 [set]="set"
                 [unitElement]="state.element"
+                (itemIgnored)="addIgnoredItem($event)"
             ></app-equipment-set>
         </mat-card-content>
     </mat-card>
@@ -67,6 +92,7 @@
                 [schmiedekunst]="state.schmiedekunst"
                 [set]="compareSet"
                 [unitElement]="state.element"
+                (itemIgnored)="addIgnoredItem($event)"
             ></app-equipment-set>
         </mat-card-content>
     </mat-card>

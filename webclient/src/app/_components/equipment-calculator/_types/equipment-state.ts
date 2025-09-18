@@ -22,6 +22,9 @@ export class EquipmentState {
     set?: EquipmentSet;
     compareSet?: EquipmentSet;
     status = IDLE_STATUS;
+    
+    // Ignore list for equipment items
+    ignoredItems: string[] = [];
 }
 
 interface Status {

@@ -23,9 +23,12 @@ import { UnitService } from '../../../_services/unit.service';
 import { Unit } from '../../../_types/unit';
 import { EquipmentSet } from '../../../_types/equipment-set';
 import {
+    AddIgnoredItem,
     CalculateEquipment,
+    ClearIgnoredItems,
     MarkForComparison,
     RemoveCompareSet,
+    RemoveIgnoredItem,
     UpdateAttackElement,
     UpdateCarryWeight,
     UpdateDefenseElement,
@@ -131,6 +134,18 @@ export class EquipmentStore {
         this.dispatch(new RemoveCompareSet());
     }
 
+    addIgnoredItem(itemName: string): void {
+        this.dispatch(new AddIgnoredItem(itemName));
+    }
+
+    removeIgnoredItem(itemName: string): void {
+        this.dispatch(new RemoveIgnoredItem(itemName));
+    }
+
+    clearIgnoredItems(): void {
+        this.dispatch(new ClearIgnoredItems());
+    }
+
     private dispatch(...actions: Array<Action>): void {
         actions.forEach((action) => this._actions$.next(action));
     }
@@ -163,6 +178,7 @@ export class EquipmentStore {
                               state.mpWeight,
                               state.elementAttack,
                               state.elementDefense,
+                              state.ignoredItems,
                           )
                           .pipe(
                               take(1),
@@ -171,14 +187,71 @@ export class EquipmentStore {
                                   ...IDLE_STATE,
                               })),
                               startWith(LOADING_STATE),
-                              catchError((error: Error) => {
+                              catchError((error) => {
                                   console.error('Error calculating equipment set:', error);
-                                  if (error.message === ErrorType.ELEMENT_MISMATCH) {
-                                      return of(errorState(new ElementMismatchError()));
-                                  } else if (error.message === ErrorType.INVALID_ITEM_COMBINATION) {
-                                      return of(errorState(new InvalidItemCombinationError()));
+                                  console.error('Error details:', {
+                                      status: error.status,
+                                      statusText: error.statusText,
+                                      message: error.message,
+                                      errorBody: error.error,
+                                      fullError: error,
+                                  });
+
+                                  // Handle HTTP error responses
+                                  if (error.status === 400) {
+                                      // Bad request - likely element mismatch or invalid combination
+                                      // Try different ways to extract the error message
+                                      let errorMessage =
+                                          error.error?.message || // Spring Boot usually puts message here
+                                          error.error?.error || // Sometimes it's nested
+                                          error.error || // Sometimes error body is the message
+                                          error.statusText || // HTTP status text
+                                          error.message || // Generic error message
+                                          'Ein unbekannter Fehler ist aufgetreten.';
+
+                                      console.log('Extracted error message:', errorMessage);
+
+                                      // If we got "Bad Request" as message, it means we didn't extract properly
+                                      if (errorMessage === 'Bad Request') {
+                                          errorMessage = 'Die gewählte Konfiguration ist ungültig.';
+                                      }
+
+                                      if (errorMessage?.includes('Element') || errorMessage?.includes('element')) {
+                                          return of(errorState(new ElementMismatchError(errorMessage)));
+                                      } else if (
+                                          errorMessage?.includes('Ausr') ||
+                                          errorMessage?.includes('Kombination')
+                                      ) {
+                                          return of(errorState(new InvalidItemCombinationError(errorMessage)));
+                                      } else {
+                                          return of(errorState(new InvalidItemCombinationError(errorMessage)));
+                                      }
                                   }
-                                  return of(errorState(error));
+
+                                  // Handle 500 errors
+                                  if (error.status === 500) {
+                                      const errorMessage =
+                                          error.error?.message || error.error || 'Ein Server-Fehler ist aufgetreten.';
+                                      return of(
+                                          errorState({
+                                              type: ErrorType.INVALID_INPUT,
+                                              message: errorMessage,
+                                          } as Error),
+                                      );
+                                  }
+
+                                  // Fallback error handling
+                                  const errorMessage =
+                                      error.error?.message ||
+                                      error.message ||
+                                      'Ein unbekannter Fehler ist aufgetreten.';
+                                  console.log('Fallback error message:', errorMessage);
+                                  return of(
+                                      errorState({
+                                          type: ErrorType.INVALID_INPUT,
+                                          message: errorMessage,
+                                      } as Error),
+                                  );
                               }),
                           )
                     : this.errorState(new InvalidUnitError('Keine Einheit ausgewählt.'));
@@ -244,6 +317,9 @@ export class EquipmentStore {
         if (action instanceof UpdateRangedForbidden) return this.onUpdateRangedForbidden(action);
         if (action instanceof MarkForComparison) return this.onMarkForComparison(action);
         if (action instanceof RemoveCompareSet) return this.onRemoveCompareSet();
+        if (action instanceof AddIgnoredItem) return this.onAddIgnoredItem(action);
+        if (action instanceof RemoveIgnoredItem) return this.onRemoveIgnoredItem(action);
+        if (action instanceof ClearIgnoredItems) return this.onClearIgnoredItems();
 
         return of(IDLE_STATE);
     }
@@ -378,6 +454,45 @@ export class EquipmentStore {
             map((state) => ({
                 ...state,
                 compareSet: undefined,
+            })),
+        );
+    }
+
+    private onAddIgnoredItem(action: AddIgnoredItem): Observable<Partial<EquipmentState>> {
+        return this.state$.pipe(
+            take(1),
+            map((state) => {
+                const ignoredItems = [...state.ignoredItems];
+                if (!ignoredItems.includes(action.itemName)) {
+                    ignoredItems.push(action.itemName);
+                }
+                return {
+                    ...state,
+                    ignoredItems,
+                    ...IDLE_STATE,
+                };
+            }),
+        );
+    }
+
+    private onRemoveIgnoredItem(action: RemoveIgnoredItem): Observable<Partial<EquipmentState>> {
+        return this.state$.pipe(
+            take(1),
+            map((state) => ({
+                ...state,
+                ignoredItems: state.ignoredItems.filter((item) => item !== action.itemName),
+                ...IDLE_STATE,
+            })),
+        );
+    }
+
+    private onClearIgnoredItems(): Observable<Partial<EquipmentState>> {
+        return this.state$.pipe(
+            take(1),
+            map((state) => ({
+                ...state,
+                ignoredItems: [],
+                ...IDLE_STATE,
             })),
         );
     }

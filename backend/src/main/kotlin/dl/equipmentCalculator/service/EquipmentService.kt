@@ -136,7 +136,8 @@ class EquipmentService {
             hp = itemJson.hp,
             mp = itemJson.mp,
             weight = itemJson.kraft,
-            ranged = itemJson.distanz > 0,
+            // ranged = itemJson.distanz > 0,
+            ranged = itemJson.itemmask and 64 != 0,
             element = mapIntToElement(itemJson.element),
             requiredWaffenschmiede = itemJson.blacksmithLevel,
             name = itemJson.langItem ?: itemJson.name.takeIf { it.isNotBlank() } ?: "Unknown Item"

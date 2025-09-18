@@ -39,3 +39,17 @@
     border-top-color: #000000;
     animation: spinner .8s linear infinite;
 }
+
+.ignored-items-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    
+    mat-chip-set {
+        flex-grow: 1;
+    }
+    
+    .clear-button {
+        align-self: flex-start;
+    }
+}

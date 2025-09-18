@@ -51,16 +51,24 @@ class EquipmentController {
         @RequestParam(value = "apWeight", defaultValue = "0") apWeight: Int = 0,
         @RequestParam(value = "vpWeight", defaultValue = "0") vpWeight: Int = 0,
         @RequestParam(value = "hpWeight", defaultValue = "0") hpWeight: Int = 0,
-        @RequestParam(value = "mpWeight", defaultValue = "0") mpWeight: Int = 0
+        @RequestParam(value = "mpWeight", defaultValue = "0") mpWeight: Int = 0,
+        @RequestParam(value = "ignoredItems", required = false) ignoredItemsParam: String? = null
     ): EquipmentSet {
         try {
+            // Parse ignored items
+            val ignoredItems = ignoredItemsParam
+                ?.split(",")
+                ?.map { it.trim() }
+                ?.filter { it.isNotEmpty() }
+                ?: emptyList()
+                
             if ((rangedRequired && rangedForbidden) || (rangedRequired && !unitRanged)) {
                 LOG.error("Invalid ranged parameters. Unit can use ranged weapons: $unitRanged | rangedRequired: $rangedRequired | rangedForbidden: $rangedForbidden")
                 throw InvalidItemCombinationException()
             }
             if (!isValidElementCombination(unitElement, elementAttack, elementDefense)) {
                 LOG.error("Invalid element combination \"$unitElement\", \"$elementAttack\" and \"$elementDefense\"!")
-                throw ElementMismatchException()
+                throw ElementMismatchException("Die gewählte Elementkombination ist ungültig.")
             }
 
             return getBestItemCombination(
@@ -75,10 +83,18 @@ class EquipmentController {
                 hpWeight,
                 mpWeight,
                 elementAttack,
-                elementDefense
+                elementDefense,
+                ignoredItems
             )
+        } catch (exception: ElementMismatchException) {
+            LOG.info("Element mismatch error: ${exception.message}")
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, exception.message, exception)
+        } catch (exception: InvalidItemCombinationException) {
+            LOG.info("Invalid item combination error: ${exception.message}")
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, exception.message, exception)
         } catch (exception: Exception) {
-            throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.message)
+            LOG.error("Unexpected error during equipment calculation", exception)
+            throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Ein unerwarteter Fehler ist aufgetreten: ${exception.message}", exception)
         }
     }
 
@@ -118,7 +134,8 @@ class EquipmentController {
         hpWeight: Int,
         mpWeight: Int,
         targetAttackElement: Element?,
-        targetDefenseElement: Element?
+        targetDefenseElement: Element?,
+        ignoredItems: List<String> = emptyList()
     ): EquipmentSet {
         val wantedWeaponElements = getWantedWeaponElements(unitElement, targetAttackElement)
         val wantedDefenseElements = getWantedDefenseElements(unitElement, targetDefenseElement)
@@ -133,32 +150,28 @@ class EquipmentController {
             equipmentLists.getAllWeapons(),
             wantedWeaponElements,
             rangedRequired,
-            rangedForbidden
+            rangedForbidden,
+            ignoredItems
         )
 
-        val validHelmets = filterInvalidItems(unitElement, maxWeight, unitRanged, schmiedeLevel, equipmentLists.getAllHelmets())
+        val validHelmets = filterInvalidItems(
+            unitElement, maxWeight, unitRanged, schmiedeLevel, 
+            equipmentLists.getAllHelmets(), emptyList(), false, false, ignoredItems
+        )
+        
         val validArmour = filterInvalidItems(
-            unitElement,
-            maxWeight,
-            unitRanged,
-            schmiedeLevel,
-            equipmentLists.getAllArmour(),
-            wantedDefenseElements
+            unitElement, maxWeight, unitRanged, schmiedeLevel,
+            equipmentLists.getAllArmour(), wantedDefenseElements, false, false, ignoredItems
         )
+        
         val validShields = filterInvalidItems(
-            unitElement,
-            maxWeight,
-            unitRanged,
-            schmiedeLevel,
-            equipmentLists.getAllShields(),
-            wantedDefenseElements
+            unitElement, maxWeight, unitRanged, schmiedeLevel,
+            equipmentLists.getAllShields(), wantedDefenseElements, false, false, ignoredItems
         )
+        
         val validAccessories = filterInvalidItems(
-            unitElement,
-            maxWeight,
-            unitRanged,
-            schmiedeLevel,
-            equipmentLists.getAllAccessories()
+            unitElement, maxWeight, unitRanged, schmiedeLevel,
+            equipmentLists.getAllAccessories(), emptyList(), false, false, ignoredItems
         )
 
 
@@ -235,7 +248,8 @@ class EquipmentController {
         equipment: List<Equipment>,
         wantedElements: List<Element> = listOf(),
         rangedRequired: Boolean = false,
-        rangedForbidden: Boolean = false
+        rangedForbidden: Boolean = false,
+        ignoredItems: List<String> = emptyList()
     ): List<Equipment> {
         return equipment.filter {
             isValidElementCombination(unitElement, it.element) &&
@@ -244,7 +258,8 @@ class EquipmentController {
                     !(rangedRequired && !it.ranged) &&
                     !(rangedForbidden && it.ranged) &&
                     (unitRanged || !it.ranged) &&
-                    (wantedElements.isEmpty() || wantedElements.contains(it.element))
+                    (wantedElements.isEmpty() || wantedElements.contains(it.element)) &&
+                    !ignoredItems.contains(it.name)
         }
     }
 

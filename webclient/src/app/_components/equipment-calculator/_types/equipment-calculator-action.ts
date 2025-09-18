@@ -79,3 +79,17 @@ export class MarkForComparison extends Action {
 }
 
 export class RemoveCompareSet extends Action {}
+
+export class AddIgnoredItem extends Action {
+    constructor(public itemName: string) {
+        super();
+    }
+}
+
+export class RemoveIgnoredItem extends Action {
+    constructor(public itemName: string) {
+        super();
+    }
+}
+
+export class ClearIgnoredItems extends Action {}
